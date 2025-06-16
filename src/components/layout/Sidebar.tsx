@@ -1,107 +1,74 @@
-// src/components/layout/Sidebar.tsx
-import {
-  BarChart3, QrCode, HeartHandshake, MessageSquareText, Megaphone,
-  CreditCard, Settings, Users, LifeBuoy, Plus
-} from 'lucide-react'
-import { NavLink, Link } from 'react-router-dom'
-import feedoLogo from '../../assets/logo.svg'
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { BarChart3, QrCode, Heart, MessageSquare, Send, DollarSign, Settings, Users, HelpCircle } from 'lucide-react';
+import { useAppStore } from '../../store';
 
-const navItems = [
-  { label: 'Painel', icon: BarChart3, href: '/' },
-  { label: 'Meus QR Codes', icon: QrCode, href: '/qr-codes' },
-  { label: 'Veepo', icon: HeartHandshake, href: '/veepo' },
-  { label: 'Feedbacks', icon: MessageSquareText, href: '/feedbacks' },
-  { label: 'Campanhas', icon: Megaphone, href: '/campanhas' },
-  { label: 'Faturamento', icon: CreditCard, href: '/faturamento' },
-]
-
-const bottomNavItems = [
-  { label: 'Configurações', icon: Settings, href: '/configuracoes' },
-  { label: 'Equipe', icon: Users, href: '/equipe' },
-  { label: 'Ajuda', icon: LifeBuoy, href: '/ajuda' },
-]
-
-const baseLinkClasses = "relative group flex items-center rounded-lg font-medium transition-colors duration-200"
-const inactiveLinkClasses = "text-gray-light/80 hover:text-lemon"
-const activeLinkClasses = "text-lemon"
-
-// Sidebar agora é estática, não precisa mais de props isOpen ou toggleSidebar
-export function Sidebar() {
-  return (
-    <aside className="w-64 flex flex-col bg-gray-dark text-gray-light border-r border-lilas-4/30">
-      
-      <div className="px-6 h-20 flex items-center border-b border-lilas-4/30 shrink-0">
-        <img src={feedoLogo} alt="Feedo Logo" className="h-8 w-auto" />
-      </div>
-
-      <div className="border-b border-lilas-4/30 my-1 py-6">
-        <div className="px-4 flex justify-center">
-            <Link 
-              to="/qr-codes/new"
-              className="flex items-center justify-center gap-2 bg-lemon text-gray-dark font-bold py-3 px-5 rounded-lg hover:bg-lemon-dark transition-colors"
-            >
-              <Plus className="h-5 w-5 shrink-0" />
-              <span>Criar QR Code</span>
-            </Link>
-        </div>
-      </div>
-      
-      <div className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto">
-        <nav className="flex-1 flex flex-col gap-2">
-            {navItems.map((item) => (
-                <NavLink
-                    key={item.label}
-                    to={item.href}
-                    end={item.href === '/'}
-                    className={({ isActive }) => 
-                      `${baseLinkClasses} py-3 ${isActive ? activeLinkClasses : inactiveLinkClasses}`
-                    }
-                >
-                    {({ isActive }) => (
-                      <>
-                        <span 
-                          className={`absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 bg-lemon rounded-full transition-opacity ${
-                            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                          }`}
-                        />
-                        <div className="flex items-center gap-3 pl-6">
-                          <item.icon className="h-5 w-5 shrink-0" />
-                          <span className="text-base font-medium">{item.label}</span>
-                        </div>
-                      </>
-                    )}
-                </NavLink>
-            ))}
-        </nav>
-
-        <div className='mt-auto'>
-          <nav className="flex flex-col gap-2 border-t border-lilas-4/30 pt-6 mt-6">
-            {bottomNavItems.map((item) => (
-                <NavLink
-                    key={item.label}
-                    to={item.href}
-                    className={({ isActive }) => 
-                      `${baseLinkClasses} py-2 ${isActive ? activeLinkClasses : inactiveLinkClasses}`
-                    }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <span 
-                        className={`absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 bg-lemon rounded-full transition-opacity ${
-                          isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                        }`}
-                      />
-                      <div className="flex items-center gap-3 pl-6">
-                        <item.icon className="h-5 w-5 shrink-0" />
-                        <span className="text-base font-medium">{item.label}</span>
-                      </div>
-                    </>
-                  )}
-                </NavLink>
-            ))}
-          </nav>
-        </div>
-      </div>
-    </aside>
-  )
+interface SidebarProps {
+  isSidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
+
+export const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
+  const location = useLocation();
+
+  const navItems = [
+    { name: 'Painel', icon: BarChart3, path: '/dashboard' },
+    { name: 'Meus QR Codes', icon: QrCode, path: '/qr-codes' },
+    { name: 'Veepo', icon: Heart, path: '/veepo' },
+    { name: 'Feedbacks', icon: MessageSquare, path: '/feedbacks' },
+    { name: 'Campanhas', icon: Send, path: '/campaigns' },
+    { name: 'Faturamento', icon: DollarSign, path: '/billing' },
+  ];
+
+  const bottomNavItems = [
+    { name: 'Configurações', icon: Settings, path: '/settings' },
+    { name: 'Equipe', icon: Users, path: '/team' },
+    { name: 'Ajuda', icon: HelpCircle, path: '/help' },
+  ];
+
+  return (
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-200 ease-in-out
+        w-64 bg-white dark:bg-gray-dark border-r border-gray-light dark:border-lilas-4/30
+        flex flex-col`}
+    >
+      <div className="flex items-center justify-center h-16 border-b border-gray-light dark:border-lilas-4/30">
+        <Link to="/dashboard" className="text-2xl font-bold text-gray-dark dark:text-white">Feedo</Link>
+      </div>
+
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        {navItems.map((item) => (
+          <Link
+            key={item.name}
+            to={item.path}
+            className={`flex items-center space-x-3 p-2 rounded-lg transition-colors
+              ${location.pathname === item.path
+                ? 'bg-lemon text-gray-dark' // Corrigido para usar cores personalizadas
+                : 'text-gray-medium dark:text-gray-light/80 hover:bg-gray-light/20 dark:hover:bg-gray-dark/50'}
+            `}
+          >
+            <item.icon className="h-5 w-5" />
+            <span>{item.name}</span>
+          </Link>
+        ))}
+      </nav>
+
+      <nav className="px-4 py-6 space-y-2 border-t border-gray-light dark:border-lilas-4/30">
+        {bottomNavItems.map((item) => (
+          <Link
+            key={item.name}
+            to={item.path}
+            className={`flex items-center space-x-3 p-2 rounded-lg transition-colors
+              ${location.pathname === item.path
+                ? 'bg-lemon text-gray-dark' // Corrigido para usar cores personalizadas
+                : 'text-gray-medium dark:text-gray-light/80 hover:bg-gray-light/20 dark:hover:bg-gray-dark/50'}
+            `}
+          >
+            <item.icon className="h-5 w-5" />
+            <span>{item.name}</span>
+          </Link>
+        ))}
+      </nav>
+    </aside>
+  );
+};

@@ -3,7 +3,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Layout } from '../components/layout/Layout'
 import { Dashboard } from '../pages/Dashboard'
-import { MyQrCodesPage } from '../pages/MyQrCodes'
+
 // 1. Importe a nova página de criação
 import { CreateQrCodePage } from '../pages/CreateQrCode'
 
