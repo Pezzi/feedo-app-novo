@@ -1,104 +1,198 @@
-import React from 'react';
-import { Menu, X, Bell, Search, User, LogOut, Settings } from 'lucide-react';
-import { useAppStore, useAuthStore } from '../../store';
+import React, { useState } from 'react';
+import { Search, Bell, User, Menu, X, LogOut, Settings, Wallet, Sun, Moon } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store';
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-  const { user, logout } = useAuthStore();
-  const { sidebarOpen } = useAppStore();
-  const [showUserMenu, setShowUserMenu] = React.useState(false);
-  const [showNotifications, setShowNotifications] = React.useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const navigate = useNavigate();
+  const { setUser } = useAuthStore();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    try {
+      // Fazer logout no Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Erro ao fazer logout:', error);
+        return;
+      }
+
+      // Limpar estado local
+      setUser(null);
+      
+      // Fechar menu dropdown
+      setShowUserMenu(false);
+      
+      // Redirecionar para login
+      navigate('/login');
+    } catch (err) {
+      console.error('Erro inesperado no logout:', err);
+    }
+  };
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    // Implementar mudança de tema
+    console.log('Toggle theme:', !isDarkMode ? 'dark' : 'light');
+  };
+
+  // Componente para itens do dropdown com hover
+  const DropdownItem = ({ icon: Icon, children, onClick }: { 
+    icon: any; 
+    children: React.ReactNode; 
+    onClick?: () => void;
+  }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    
+    return (
+      <button 
+        className="w-full flex items-center space-x-3 px-4 py-2 transition-colors"
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{ 
+          color: isHovered ? '#DDF247' : '#F2F2F2',
+          backgroundColor: 'transparent'
+        }}
+      >
+        <Icon className="h-4 w-4" />
+        <span>{children}</span>
+      </button>
+    );
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+    <header className="px-6 py-4" style={{ backgroundColor: 'transparent' }}>
       <div className="flex items-center justify-between">
-        {/* Left side */}
+        {/* Left side - Mobile menu button */}
         <div className="flex items-center space-x-4">
           <button
             onClick={onMenuClick}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="md:hidden p-2 rounded-lg transition-colors"
+            style={{ color: '#8A8AA0' }}
           >
-            {sidebarOpen ? (
-              <X className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-            ) : (
-              <Menu className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-            )}
+            <Menu className="h-5 w-5" />
           </button>
+        </div>
 
-          {/* Search */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        {/* Center - Search */}
+        <div className="flex-1 max-w-2xl mx-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: '#7A798A' }} />
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar..."
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2"
+              style={{ 
+                backgroundColor: '#1a1a1a', 
+                border: '1px solid #2a2a2a',
+                color: '#fff'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#DDF247';
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(221, 242, 71, 0.2)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#2a2a2a';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             />
           </div>
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
-            >
-              <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+        {/* Right side - Theme toggle, Notifications and User menu */}
+        <div className="flex items-center space-x-2">
+          {/* Theme Toggle - sem pílula, apenas realce quando ativo */}
+          <button 
+            onClick={toggleTheme}
+            className="p-2 rounded-lg transition-colors"
+            style={{ 
+              color: isDarkMode ? '#DDF247' : '#8A8AA0',
+              backgroundColor: 'transparent'
+            }}
+            title={isDarkMode ? 'Modo claro' : 'Modo escuro'}
+          >
+            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+
+          {/* Notifications - sem pílula */}
+          <button 
+            className="p-2 rounded-lg transition-colors" 
+            style={{ color: '#8A8AA0' }}
+            title="Notificações"
+          >
+            <div className="relative">
+              <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-            </button>
+            </div>
+          </button>
 
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Notificações</h3>
-                </div>
-                <div className="p-4">
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">Nenhuma notificação nova</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* User menu */}
+          {/* User Menu - sem pílula */}
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center space-x-3 p-2 rounded-lg transition-colors"
+              style={{ color: '#8A8AA0' }}
             >
-              <div className="h-8 w-8 bg-accent rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-dark" />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#DDF247' }}>
+                <User className="h-5 w-5" style={{ color: '#161616' }} />
               </div>
-              <span className="hidden md:block text-gray-700 dark:text-gray-300 font-medium">
-                {user?.email || 'Usuário'}
-              </span>
+              <span className="hidden md:block font-medium" style={{ color: '#fff' }}>johnpezzi@me.com</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#7A798A' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
 
+            {/* Dropdown Menu - Glassmorphism com hover nos itens */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-                <div className="p-2">
-                  <button className="w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                    <Settings className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-700 dark:text-gray-300">Configurações</span>
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  >
-                    <LogOut className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-700 dark:text-gray-300">Sair</span>
-                  </button>
+              <div 
+                className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50 backdrop-blur-md"
+                style={{ 
+                  backgroundColor: 'rgba(26, 26, 26, 0.8)', 
+                  border: '1px solid rgba(221, 242, 71, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                <div className="p-4" style={{ borderBottom: '1px solid rgba(42, 42, 42, 0.5)' }}>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#DDF247' }}>
+                      <User className="h-6 w-6" style={{ color: '#161616' }} />
+                    </div>
+                    <div>
+                      <p className="font-medium" style={{ color: '#fff' }}>johnpezzi@me.com</p>
+                      <p className="text-sm" style={{ color: '#7A798A' }}>Usuário Premium</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="py-2">
+                  <DropdownItem icon={User}>
+                    My Profile
+                  </DropdownItem>
+                  
+                  <DropdownItem icon={Wallet}>
+                    Wallet
+                  </DropdownItem>
+                  
+                  <DropdownItem icon={Settings}>
+                    Configurações
+                  </DropdownItem>
+                  
+                  <hr className="my-2" style={{ borderColor: 'rgba(42, 42, 42, 0.5)' }} />
+                  
+                  <DropdownItem icon={LogOut} onClick={handleLogout}>
+                    Log out
+                  </DropdownItem>
                 </div>
               </div>
             )}

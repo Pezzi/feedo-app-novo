@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { type User } from '@supabase/supabase-js'; // Importação corrigida com 'type'
-import { supabase } from '../services/supabase'; // Caminho corrigido
+import { persist } from 'zustand/middleware';
+import type { User } from '@supabase/supabase-js';
+import { supabase } from '../services/supabase';
 
 interface AuthState {
   user: User | null;
@@ -8,20 +9,41 @@ interface AuthState {
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isLoading: true,
-  isAuthenticated: false,
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-  setLoading: (isLoading) => set({ isLoading }),
-  logout: async () => {
-    await supabase.auth.signOut();
-    set({ user: null, isAuthenticated: false });
-  }
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      isLoading: true,
+      isAuthenticated: false,
+      setUser: (user) => {
+        set({ 
+          user, 
+          isAuthenticated: !!user,
+          isLoading: false 
+        });
+      },
+      setLoading: (isLoading) => set({ isLoading }),
+      logout: async () => {
+        try {
+          await supabase.auth.signOut();
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        } catch (error) {
+          console.error('Erro ao fazer logout:', error);
+        }
+      }
+    }),
+    {
+      name: 'feedo-auth',
+      partialize: (state) => ({ 
+        user: state.user,
+        isAuthenticated: state.isAuthenticated 
+      }),
+    }
+  )
+);
 
 interface AppState {
   sidebarOpen: boolean;

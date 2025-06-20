@@ -12,7 +12,7 @@ export default {
   ],
   theme: {
     extend: {
-      // 1. Adicionamos a nova paleta de cores
+      
       colors: {
         'lemon': '#D9ED14',
         'lemon-dark': '#A3B70E',
@@ -25,11 +25,11 @@ export default {
         'lilas-3': '#BBAAFF',
         'lilas-4': '#625A7F',
         'lilas-5': '#9688CC',
-        // Mantemos 'white' e 'black' para conveniência
+        
         'white': '#FFFFFF',
         'black': '#000000',
       },
-      // 2. Definimos a nova família de fontes
+      
       fontFamily: {
         sans: ['Geologica', 'sans-serif'],
       },
